@@ -1,0 +1,26 @@
+{
+  "name": "brotorrent",
+  "version": "0.0.1",
+  "description": "A distributed file-sharing service.",
+  "main": "src/server/main.js",
+  "dependencies": {
+    "ajax-request": "^1.2.1",
+    "body-parser": "^1.14.1",
+    "colors": "^1.1.2",
+    "express": "^4.13.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nikoladimitroff/Brotorrent.git"
+  },
+  "author": "Nikola Dimitroff, Peter Parushev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nikoladimitroff/Brotorrent/issues"
+  },
+  "homepage": "https://github.com/nikoladimitroff/Brotorrent#readme"
+}
