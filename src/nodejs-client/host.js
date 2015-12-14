@@ -4,7 +4,6 @@ var net = require("net");
 var config = require("../config");
 
 var BroFilehost = function () {
-    this.address = "localhost";
     this.clients = [];
     this.server = null;
     this.publishedFiles = {};
@@ -98,7 +97,7 @@ BroFilehost.prototype.run = function () {
         }.bind(this));
 
     }.bind(this));
-    this.server.listen({host: this.address, port: config.BROHOST_PORT});
+    this.server.listen({host: config.BROHOST_IP, port: config.BROHOST_PORT});
 
     // Put a friendly message on the terminal of the server.
     console.log("Brohost running at port", config.BROHOST_PORT);

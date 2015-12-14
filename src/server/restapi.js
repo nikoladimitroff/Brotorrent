@@ -1,8 +1,9 @@
 var express    = require("express");
 var bodyParser = require("body-parser");
 
+var config = require("../config");
+
 var BroRestApi = function () {
-    this.port = process.env.PORT || 8080;
     this.app = express();
     this.app.use(bodyParser.json());
     this.files = {}; // [filename: string] => { name: string, description: string, broseeders: string[] }
@@ -54,10 +55,9 @@ BroRestApi.prototype._setupRoutes = function () {
     }.bind(this));
 }
 
-BroRestApi.prototype.start = function (host, port) {
-    this.port = port || this.port;
-    this.app.listen(port, host);
-    console.log("Magic happens on ", host, " ", this.port);
+BroRestApi.prototype.start = function () {
+    this.app.listen(config.REST_SERVER_PORT, config.REST_SERVER_IP);
+    console.log("Magic happens on ", config.REST_SERVER_IP, " ", config.REST_SERVER_PORT);
 };
 
 module.exports = BroRestApi;

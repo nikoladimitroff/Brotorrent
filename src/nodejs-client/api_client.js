@@ -3,11 +3,12 @@ var path = require("path");
 
 var request = require("ajax-request");
 
+var config = require("../config");
 var BroHost = require("./host");
 var BroDownloader = require("./downloader");
 
 var BroApiClient = {};
-BroApiClient.server = "http://localhost:8080";
+BroApiClient.server = "http://" + config.REST_SERVER_IP + ":" + config.REST_SERVER_PORT;
 BroApiClient.allFiles = [];
 BroApiClient.host = null;
 BroApiClient.downloader = null;
