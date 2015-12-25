@@ -44,7 +44,6 @@ BroDownloader.prototype._tryCompleteDownload = function (downloadInfo) {
     var totalDataDownloaded = downloadInfo.buffers.reduce(function (sum, buffer) {
         return sum + buffer.dataWritten;
     }, 0);
-    console.log(totalDataDownloaded, downloadInfo.size);
     if (totalDataDownloaded === downloadInfo.size) {
         fs.open(downloadInfo.downloadLocation, "w", function (err, fd) {
             if (err) {
@@ -63,6 +62,7 @@ BroDownloader.prototype._tryCompleteDownload = function (downloadInfo) {
                 else {
                     console.log("Successfully downloaded file: ".info, downloadInfo.file.data);
                 }
+                fs.close(fd);
             });
         }.bind(this));
         this.dequeue(downloadInfo);
@@ -88,27 +88,58 @@ BroDownloader.prototype._ondatareceived = function (socket, downloadInfo, data) 
         buffer.dataWritten += data.copy(buffer.data, buffer.dataWritten);
     }
     if (buffer.dataWritten === (buffer.rangeEnd - buffer.rangeStart)) {
-        // all done
-        this._closeConnection(downloadInfo, buffer);
-        this._tryCompleteDownload(downloadInfo);
+        // finished the task, try to get a new one or close the socket if no tasks are left
+        var tasksLeft = this._tryDownloadNextPacket(buffer.socket, downloadInfo);
+        if (!tasksLeft) {
+            this._closeConnection(downloadInfo, buffer);
+            this._tryCompleteDownload(downloadInfo);
+        }
     }
 }
 
 BroDownloader.prototype._onconnected = function (socket, downloadInfo) {
     socket.on("data", this._ondatareceived.bind(this, socket, downloadInfo));
-    var newBuffer = {
-        rangeStart: 0,
-        rangeEnd: 0 || downloadInfo.size,
-        data: new Buffer(downloadInfo.size),
-        dataWritten: 0,
-        requestAccepted: false,
-        socket: socket
-    };
-    downloadInfo.buffers.push(newBuffer);
-    socket.write(this._getRequestCommandForBuffer(newBuffer, downloadInfo.file));
+    this._tryDownloadNextPacket(socket, downloadInfo);
 };
 
+BroDownloader.prototype._tryDownloadNextPacket = function (socket, downloadInfo) {
+    var buffer = null;
+    for (var i = 0; i < downloadInfo.buffers.length; i++) {
+        // if no socket is attached to the buffer, the task is not yet taken
+        if (downloadInfo.buffers[i].socket === null) {
+            buffer = downloadInfo.buffers[i];
+            break;
+        }
+    }
+    if (buffer === null) {
+        // No tasks left
+        return false;
+    }
+    buffer.socket = socket;
+    socket.write(this._getRequestCommandForBuffer(buffer, downloadInfo.file));
+    return true;
+}
+
 BroDownloader.prototype._startDownload = function (downloadInfo) {
+    // Create a queue of buffers (tasks)
+    var packetSize = Math.min(1 << 30, downloadInfo.size); // Max packet size is 1MB
+    var packetCount = Math.ceil(downloadInfo.size / packetSize);
+    var currentRequestSize = 0; // The last packet size should be equal totalSize - sum(otherPackets)
+    for (var i = 0; i < packetCount; i++) {
+        var currentPacketSize = Math.min(packetSize, downloadInfo.size - currentRequestSize);
+
+        var newBuffer = {
+            rangeStart: currentRequestSize,
+            rangeEnd: currentPacketSize,
+            data: new Buffer(currentPacketSize),
+            dataWritten: 0,
+            requestAccepted: false,
+            socket: null
+        };
+        downloadInfo.buffers.push(newBuffer);
+
+        currentRequestSize += currentPacketSize;
+    }
     var sockets = [];
     for (var i = 0; i < downloadInfo.seeders.length; i++) {
         var socket = new net.Socket();

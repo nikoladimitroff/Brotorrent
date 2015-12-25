@@ -20,6 +20,15 @@ BroRestApi.prototype._validateFile = function (fileInfo) {
         fileInfo.size > 0;
 }
 
+var removeSwapElement = function (array, element) {
+    for (var i = 0; i < array.length; i++) {
+        if (array[i] === element) {
+            array[i] = array[array.length - 1];
+            array.pop();
+        }
+    }
+}
+
 BroRestApi.prototype._setupRoutes = function () {
     this.app.get("/", function (req, res) {
         res.json({ message: "hooray! welcome to our api!" });
@@ -43,6 +52,40 @@ BroRestApi.prototype._setupRoutes = function () {
         console.log("File ", fileInfo.name, " was published by ", req.ip);
         res.sendStatus(200);
     }.bind(this));
+    this.app.delete("/publish", function (req, res) {
+        var filename = req.body.file;
+        this._unpublish(filename);
+        res.sendStatus(200);
+    }.bind(this));
+    this.app.post("/seed", function (req, res) {
+        var filename = req.body.file;
+        var fileInfo = this.files[filename];
+        if (!fileInfo) {
+            res.status(404).send("No such file");
+            return;
+        }
+        if (fileInfo.broseeders.indexOf(req.ip) != -1) {
+            res.status(400).send("You are already seeding this file!");
+            return;
+        }
+        fileInfo.broseeders.push(req.ip);
+        res.sendStatus(200);
+        console.log(req.ip, " started seeding ", filename);
+    }.bind(this));
+    this.app.delete("/seed", function (req, res) {
+        var filename = req.body.file;
+        var fileInfo = this.files[filename];
+        if (!fileInfo) {
+            res.status(404).send("No such file");
+            return;
+        }
+        removeSwapElement(fileInfo.broseeders, req.ip);
+        res.sendStatus(200);
+        console.log(req.ip, " cancelled seeding '", filename, "'. Seeders remaining: ", fileInfo.broseeders.length);
+        if (fileInfo.broseeders.length === 0) {
+            this._unpublish(filename);
+        }
+    }.bind(this));
     this.app.get("/download/:filename", function (req, res) {
         console.log(req.ip, " requested downloading ", req.params.filename);
         var info = this.files[req.params.filename];
@@ -53,6 +96,11 @@ BroRestApi.prototype._setupRoutes = function () {
             res.status(404).send("No such file");
         }
     }.bind(this));
+}
+
+BroRestApi.prototype._unpublish = function (filename) {
+    delete this.files[filename];
+    console.log("File '", filename, "' was unpublished. It is no longer accessible.");
 }
 
 BroRestApi.prototype.start = function () {
