@@ -1,0 +1,70 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:net_client"
+        x:Class="Brotorrent.MainWindow"
+        mc:Ignorable="d"
+        Width="800"
+        Height="600"
+        Title="Brotorrent">
+    <Grid>
+        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0">
+            <ToolBar x:Name="toolBar">
+                <Button x:Name="refreshButton" Content="Refresh" VerticalAlignment="Top" Click="refreshButton_Click"/>
+                <Button x:Name="publishButton" Content="Publish" VerticalAlignment="Top" Click="publishButton_Click"/>
+                <Button x:Name="logButton" Content="See log" VerticalAlignment="Top" Click="logButton_Click"/>
+            </ToolBar>
+            <DataGrid ItemsSource="{Binding PublishedFiles}"
+                CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserResizeRows="False" CanUserSortColumns="True"
+                AutoGenerateColumns="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="File" Binding="{Binding Filename}" />
+                    <DataGridTextColumn Header="Author" Binding="{Binding Author}" />
+                    <DataGridTextColumn Header="Description" Binding="{Binding Description}" />
+                    <DataGridTextColumn Header="Size" Binding="{Binding ReadableSize}" />
+                    <DataGridTextColumn Header="Seeders" Binding="{Binding BroSeeders.Length}" />
+                    <DataGridTemplateColumn Header="Download">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button x:Name="downloadButton" CommandParameter="{Binding Filename}" Content="Download" Click="downloadButton_Click"></Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </StackPanel>
+        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Bottom">
+            <Label Content="Downloads"/>
+            <DataGrid ItemsSource="{Binding Downloads}"
+                CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserResizeRows="False" CanUserSortColumns="True"
+                AutoGenerateColumns="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="File" Binding="{Binding Filename}" />
+                    <DataGridTextColumn Header="Download Location" Binding="{Binding DownloadLocation}" />
+                    <DataGridTextColumn Header="Size" Binding="{Binding ReadableSize}" />
+                    <DataGridTextColumn Header="Progress" Binding="{Binding Progress}" />
+                    <DataGridTemplateColumn Header="Delete">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button x:Name="deleteButton" CommandParameter="{Binding Filename}" Content="Delete" Click="deleteButton_Click"></Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Show In Folder">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button x:Name="showInFolderButton" CommandParameter="{Binding Filename}" Content="Show in Folder" Click="showInFolderButton_Click"></Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </StackPanel>
+        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,10,0">
+            <Label Content="Your name" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <TextBox x:Name="authorTextbox" HorizontalAlignment="Center" TextWrapping="Wrap" Text="{Binding Author, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top"/>
+        </StackPanel>
+    </Grid>
+</Window>

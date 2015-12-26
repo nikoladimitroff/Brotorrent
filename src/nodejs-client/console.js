@@ -4,6 +4,7 @@ var readline = require("readline");
 
 var colors = require("colors");
 
+var Logger = require("./logger");
 var BroApiClient = require("./api_client");
 
 var Bronsole = function () {
@@ -25,10 +26,12 @@ var Bronsole = function () {
 };
 
 var RegexPatterns = {
-    list: /list(?:\s+(.+))?/,
+    list: /list\s*(--mine)?(.+)?/,
     publish: /publish\s+((?:\.\.|\w|\\|\/|:|\.)+)\s+(".+")/,
+    unseed: /unseed\s+(.+)/,
     download: /download\s+(.+)\s+((?:\.\.|\w|\\|\/|:|\.)+)/,
     author: /author(?:\s+(.+))?/,
+    info: /info\s+(.+)/
 };
 var Indent = "    ";
 
@@ -50,25 +53,27 @@ var stringWithWidth = function (width, str, filler) {
 Bronsole.prototype.onreadline = function (line) {
     if (RegexPatterns.list.test(line)) {
         // List all items
-        var filePattern = new RegExp(RegexPatterns.list.exec(line)[1]);
-        var files = BroApiClient.list(filePattern);
-        console.log("All downloadable files".bold.white);
+        var match = RegexPatterns.list.exec(line);
+        var onlyMine = match.length > 1 && match[1] === '--mine';
+        var filePattern = new RegExp(match[2]);
+        var files = BroApiClient.list(filePattern, onlyMine);
+        Logger.log("Downloadable files".bold.white);
         var separator = stringWithLength(75, "=").bold;
-        console.log(separator);
+        Logger.log(separator);
         var headerRow = stringWithWidth(Indent.length, "i", " ") + "| " +
             stringWithWidth(30, "File", " ") + "| " +
             stringWithWidth(10, "Author", " ") + "| " +
             stringWithWidth(10, "Size", " ") + "| " +
             stringWithWidth(20, "Description", " ");
-        console.log(headerRow.white);
-        console.log(separator);
+        Logger.log(headerRow.white);
+        Logger.log(separator);
         for (var i = 0; i < files.length; i++) {
             var outputLine = stringWithWidth(Indent.length, i.toString(), " ") + "| " +
             stringWithWidth(30, files[i].name, " ") + "| " +
             stringWithWidth(10, files[i].author, " ") + "| " +
             stringWithWidth(10, files[i].size.toString(), " ") + "| " +
             stringWithWidth(20, files[i].description, " ");
-            console.log(outputLine);
+            Logger.log(outputLine);
         }
     }
     else if (RegexPatterns.publish.test(line)) {
@@ -86,9 +91,16 @@ Bronsole.prototype.onreadline = function (line) {
         catch (e) {}
         if (size === -1) {
             var errorMessage = "Can't publish a nonexisting file: " + fileToPublish;
-            return console.log(errorMessage.error);
+            return Logger.log(errorMessage.error);
         }
-        BroApiClient.publish(this.author, fileToPublish, size, description);
+        var filename = path.basename(fileToPublish);
+        var pathToFile = path.resolve(fileToPublish);
+        BroApiClient.publish(this.author, filename, pathToFile, size, description);
+    }
+    else if (RegexPatterns.unseed.test(line)) {
+        var match = RegexPatterns.unseed.exec(line);
+        var file = match[1];
+        BroApiClient.unseed(file);
     }
     else if (RegexPatterns.download.test(line)) {
         var match = RegexPatterns.download.exec(line);
@@ -103,11 +115,15 @@ Bronsole.prototype.onreadline = function (line) {
         }
         else {
             var author = this.author || "<No author set>"
-            console.log("Current author: ".info, author.data);
+            Logger.log("Current author: ".info, author.data);
         }
     }
+    else if (RegexPatterns.info.test(line)) {
+        var match = RegexPatterns.info.exec(line);
+        BroApiClient.info(match[1]);
+    }
     else {
-        console.log("Unknown command!".warn);
+        Logger.log("Unknown command!".warn);
     }
     this.rl.prompt();
 };
@@ -118,16 +134,21 @@ Bronsole.prototype.onclose = function () {
             process.exit(0);
     //    }
     //});
-}
+};
+
+// BroApiClient.Listener functions
+Bronsole.prototype.onprogress = function (data /* [file, progress] */) {
+    console.log("Progress on file: ".info, data[0].data, " - ".info, (data[1] * 100).toFixed(2).data);
+};
 
 Bronsole.prototype._init = function () {
-    BroApiClient.init()
+    BroApiClient.init(this)
 };
 
 Bronsole.prototype.run = function () {
     this._init();
 
-    console.log("Welcome to Bronsole".underline.bold);
+    Logger.log("Welcome to Bronsole".underline.bold);
     this.rl.setPrompt("Bronsole> ");
     this.rl.prompt();
 

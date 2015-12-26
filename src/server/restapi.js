@@ -33,8 +33,10 @@ BroRestApi.prototype._setupRoutes = function () {
     this.app.get("/", function (req, res) {
         res.json({ message: "hooray! welcome to our api!" });
     }.bind(this));
+    var c = 0;
     this.app.get("/files", function (req, res) {
         res.json(this._filesToArray());
+        console.log("Someone asked me for file listing", c++);
     }.bind(this));
     this.app.post("/publish", function (req, res) {
         var fileInfo = {

@@ -1,0 +1,33 @@
+﻿<Window x:Class="Brotorrent.DownloadFileWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Brotorrent"
+        mc:Ignorable="d"
+        Title="Download File" Height="300" Width="300">
+    <Grid>
+
+        <StackPanel Margin="20,0">
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Filename" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                <TextBox Text="{Binding File.Filename}" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="File Size" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                <TextBox Text="{Binding File.ReadableSize, Mode=OneTime}" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top"/>
+            </StackPanel>
+
+            <Label Content="Select where to store the file" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <StackPanel Height="19" Orientation="Horizontal">
+                <TextBox x:Name="pathTextbox" HorizontalAlignment="Left" TextWrapping="Wrap" Text="..." Width="100" IsReadOnly="True"/>
+                <Button x:Name="browseToFileButton" Content="Browse" Width="49" Click="browseToFileButton_Click" HorizontalAlignment="Right" HorizontalContentAlignment="Center"/>
+            </StackPanel>
+
+            <Label Content="Space on Disk" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <TextBox Text="{Binding SpaceOnDisk}" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top"/>
+
+            <Button x:Name="downloadButton" Content="Download!" Click="downloadButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

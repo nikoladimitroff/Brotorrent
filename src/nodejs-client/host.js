@@ -1,6 +1,7 @@
 var fs = require("fs");
 var net = require("net");
 
+var Logger = require("./logger");
 var config = require("../config");
 
 var BroFilehost = function () {
@@ -23,12 +24,12 @@ BroFilehost.prototype._closeConnection = function (socket) {
             this.clients.pop();
         }
     }
-    console.log("Closed connection to: ".info, socket.remoteAddress.data);
+    Logger.log("Closed connection to: ".info, socket.remoteAddress.data);
 }
 
 BroFilehost.prototype._refuseSocketConnection = function (socket, reason) {
-    console.log(reason.bold.error);
-    socket.write(config.COMMANDS.refuse);
+    Logger.log(reason.bold.error);
+    socket.write(config.COMMANDS.refuse, "ascii");
     this._closeConnection(socket);
 };
 
@@ -39,22 +40,30 @@ BroFilehost.prototype._serveFileRequest = function (socket, rangeStart, rangeEnd
             this._refuseSocketConnection(socket, "Brohost failed to find published file: " + fileInfo.file);
             return;
         }
-        socket.write(config.COMMANDS.accept);
-        fs.read(fd, buffer, 0, rangeEnd, rangeStart, function(err, num) {
-            if (err || num != (rangeEnd - rangeStart)) {
-                console.log("Brohost failed to serve file request for: ".error, fileInfo.path.data);
+        fs.read(fd, buffer, 0, buffer.length , rangeStart, function(err, num) {
+            if (err || num != buffer.length) {
+                Logger.log("Brohost failed to serve file request for: ".error, fileInfo.path.data);
             }
             else {
-                socket.write(buffer.toString('utf-8', 0, buffer.length));
-                console.log("Brohost served file request for: ".info, fileInfo.path.data);
+                socket.write(buffer, "ascii");
+                Logger.log("Brohost served file request for: ".info, fileInfo.path.data);
             }
-            this._closeConnection(socket);
+            fs.close(fd);
         }.bind(this));
     }.bind(this));
 }
 
 BroFilehost.prototype._ondata = function (socket, data) {
-    var command = data.toString();
+    var commands = data.toString().split("$").filter(function (s) { return s.length > 0; });
+    if (commands.length > 1) {
+        throw new Error(commands);
+    }
+    for (var i = 0; i < commands.length; i++) {
+        this._executeCommand(socket, commands[i]);
+    }
+};
+
+BroFilehost.prototype._executeCommand = function (socket, command) {
     if (RegexPatterns.request.test(command)) {
         var match = RegexPatterns.request.exec(command);
         var file = match[3];
@@ -71,6 +80,7 @@ BroFilehost.prototype._ondata = function (socket, data) {
                 "Brohost received a download request with invalid range: " + match[1] + " / " + match[2]);
             return;
         }
+        socket.write(config.COMMANDS.accept, "ascii");
         this._serveFileRequest(socket, rangeStart, rangeEnd, fileInfo);
     }
     else {
@@ -85,9 +95,6 @@ BroFilehost.prototype.run = function () {
         socket.name = socket.remoteAddress + ":" + socket.remotePort;
         this.clients.push(socket);
 
-        // Send a nice welcome message and announce
-        //socket.write("Welcome " + socket.name + "\n");
-
         // Handle incoming messages from clients.
         socket.on("data", this._ondata.bind(this, socket));
 
@@ -100,7 +107,8 @@ BroFilehost.prototype.run = function () {
     this.server.listen({host: config.BROHOST_IP, port: config.BROHOST_PORT});
 
     // Put a friendly message on the terminal of the server.
-    console.log("Brohost running at port", config.BROHOST_PORT);
+    return Object.keys(Logger);
+    Logger.log("Brohost running at port", config.BROHOST_PORT);
 };
 
 BroFilehost.prototype.publishFile = function (fileInfo) {
@@ -109,13 +117,6 @@ BroFilehost.prototype.publishFile = function (fileInfo) {
 
 BroFilehost.prototype.unpublishFile = function (filename) {
     delete this.publishedFiles[filename];
-};
-
-BroFilehost.prototype.broadcast = function (message) {
-    clients.forEach(function (client) {
-        client.write(message);
-    });
-    process.stdout.write(message);
 };
 
 module.exports = BroFilehost;
