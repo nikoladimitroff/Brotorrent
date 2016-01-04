@@ -44,7 +44,6 @@
                     <DataGridTextColumn Header="File" Binding="{Binding Filename}" />
                     <DataGridTextColumn Header="Download Location" Binding="{Binding DownloadLocation}" />
                     <DataGridTextColumn Header="Size" Binding="{Binding ReadableSize}" />
-                    <DataGridTextColumn Header="Progress" Binding="{Binding Progress}" />
                     <DataGridTemplateColumn Header="Delete">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>

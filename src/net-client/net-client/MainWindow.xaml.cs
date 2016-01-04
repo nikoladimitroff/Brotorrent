@@ -66,6 +66,10 @@ namespace Brotorrent
 
         private void deleteButton_Click(object sender, RoutedEventArgs e)
         {
+            Button target = sender as Button;
+            var filename = target.CommandParameter as string;
+            var download = this.Viewmodel.Downloads.First(f => f.Filename == filename);
+            System.IO.File.Delete(download.DownloadLocation);
 
         }
 

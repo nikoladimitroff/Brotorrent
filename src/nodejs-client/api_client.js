@@ -39,7 +39,6 @@ BroApiClient._onFileDownloaded = function (file, downloadLocation, size, wasSucc
 }
 
 BroApiClient.list = function (filePattern, onlyMine) {
-    console.log(filePattern, onlyMine);
     request(BroApiClient.server + "/files/", function (err, req, body) {
         BroApiClient.onFileList(JSON.parse(body || ""));
     });
@@ -52,6 +51,10 @@ BroApiClient.list = function (filePattern, onlyMine) {
     }
     return list;
 };
+
+BroApiClient.listDownloaded = function () {
+    return BroApiClient.downloader.brotorrents;
+}
 
 BroApiClient.publish = function (author, filename, pathToFile, size, description) {
     BroApiClient._seedFile(author, filename, pathToFile, size, description, true);

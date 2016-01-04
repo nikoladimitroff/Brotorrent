@@ -41,6 +41,7 @@ BroDownloader.prototype._closeConnection = function (downloadInfo, buffer) {
     socket.removeAllListeners("data");
     socket.end();
     removeSwapElement(downloadInfo.sockets, socket);
+    buffer.socket = null;
 };
 
 BroDownloader.prototype._getCurrentProgress = function (downloadInfo) {

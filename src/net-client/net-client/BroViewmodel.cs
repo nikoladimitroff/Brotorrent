@@ -24,9 +24,9 @@ namespace Brotorrent
             }
         }
 
-        public struct FileDownload : INotifyPropertyChanged
+        public class FileDownload : INotifyPropertyChanged
         {
-            private float progress;
+            private double progress;
 
             public string Filename { get; set; }
             public string DownloadLocation { get; set; }
@@ -38,7 +38,7 @@ namespace Brotorrent
                     return PublishedFile.MakeSizeReadable(Size);
                 }
             }
-            public float Progress
+            public double Progress
             {
                 get { return progress; }
                 set

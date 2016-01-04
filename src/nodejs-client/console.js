@@ -27,7 +27,7 @@ var Bronsole = function () {
 
 var RegexPatterns = {
     list: /list\s*(--mine)?(.+)?/,
-    publish: /publish\s+((?:\.\.|\w|\\|\/|:|\.)+)\s+(".+")/,
+    publish: /publish\s+((?:\.\.|\w|\\|\/|:|-|_|\.)+)\s+(".+")/,
     unseed: /unseed\s+(.+)/,
     download: /download\s+(.+)\s+((?:\.\.|\w|\\|\/|:|\.)+)/,
     author: /author(?:\s+(.+))?/,
